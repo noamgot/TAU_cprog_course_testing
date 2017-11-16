@@ -5,6 +5,17 @@ from student import *
 import zipfile
 import shutil
 import sys
+import subprocess
+
+# giving a very generous default timout of 15 seconds
+def run_command(cmd, timeout=15):
+    p = subprocess.Popen(cmd)
+    try:
+        p.wait(timeout)
+        return 0
+    except subprocess.TimeoutExpired:
+        p.kill()
+        return 1
 
 
 def validate_input():
@@ -17,6 +28,7 @@ def validate_input():
         sys.exit("Invalid ex num, exiting...")
 
     return n
+
 
 def make_dir(path):
     try:
@@ -33,7 +45,13 @@ def find_student(students_lst, id_to_find):
     return None
 
 
-def extract_zip_files(path, ex, too_many_files, not_zip, bad_zip_name, students_lst):
+def update_no_submission_lst(students_lst):
+    for student in students_lst:
+        if student.no_submission == X:
+            FatalErrorsLists.no_submission.append(student.student_id)
+
+
+def extract_zip_files(path, ex, students_lst):
     first_bad_file = True
     _, dirnames, _ = next(os.walk("."))
     for curr_dir in dirnames:
@@ -50,12 +68,11 @@ def extract_zip_files(path, ex, too_many_files, not_zip, bad_zip_name, students_
         _, _, filenames = next(os.walk(curr_dir))
         if len(filenames) != 1:  # should be only one .zip file
             curr_student.too_many_files = X
-            too_many_files.append(curr_id)
+            FatalErrorsLists.too_many_files.append(curr_id)
         elif filenames[0].endswith(".zip"):
             if filenames[0][:-4] != (ex + "_" + curr_id):
                 curr_student.bad_zip_name = X
-                bad_zip_name.append(curr_id)
-
+                FatalErrorsLists.bad_zip_name.append(curr_id)
             zip_file = os.path.join(".", curr_dir, filenames[0])
             dir_to_extract = os.path.join(path, curr_id)
             make_dir(dir_to_extract)
@@ -69,7 +86,7 @@ def extract_zip_files(path, ex, too_many_files, not_zip, bad_zip_name, students_
                 first_bad_file = False
             shutil.copy(os.path.join(".", curr_dir, filenames[0]), os.path.join(not_zip_dir))
             curr_student.no_zip_file = X
-            not_zip.append(curr_id)
+            FatalErrorsLists.no_zip_file.append(curr_id)
 
 
 # def run_exe_files(path ,dir, ex, id, question_num, bad_c_name_lst, comp_error_lst):
@@ -83,21 +100,33 @@ def extract_zip_files(path, ex, too_many_files, not_zip, bad_zip_name, students_
 #     else:
 #         bad_c_name_lst.append(id)
 
-def compile_and_run_question(path, dir, ex, id, question_num, bad_c_name_lst, comp_error_lst, student):
-    c_path = os.path.join(path, dir, ex + "_q" + str(question_num) + "_" + id + ".c")
+def compile_and_run_question(path, ex, student_id, question_num, num_of_tests, student):
+    c_path = os.path.join(path, student_id, ex + "_q" + str(question_num) + "_" + student_id + ".c")
     # check if .c file exists
     if not os.path.isfile(c_path):
         student.set_bad_c_file_err(question_num)
-        bad_c_name_lst.append(id)
+        FatalErrorsLists.bad_c_file_name[question_num-1].append(student_id)
         return
 
-    os.system("compile_single_file.bat " + ex + " " + dir + " " + c_path)
-    exe_path = os.path.join(path, dir, ex + "_q" + str(question_num) + "_" + id + ".exe")
+    os.system("compile_single_file.bat " + ex + " " + student_id + " " + c_path)
+    exe_path = os.path.join(path, student_id, ex + "_q" + str(question_num) + "_" + student_id + ".exe")
     if os.path.isfile(exe_path):
-        os.system(exe_path + " > " + exe_path[:-4] + ".txt")
+        # the compilation succeeded - run tests!
+        for i in range(num_of_tests):
+            input_file_name = "q" + str(question_num) + "t" + str(i+1) + ".txt"
+            rc = run_command(exe_path + " < " + input_file_name + " > " + exe_path[:-4] + ".txt")
+            if rc != 0: # timeout!
+                FatalErrorsLists.test_timeout[question_num-1][i].append(student_id)
     else:  # ex does not exists - compilation error
         student.set_compilation_err(question_num)
-        comp_error_lst.append(id)
+        FatalErrorsLists.compilation_error[question_num-1].append(student_id)
+
+
+def compile_and_run_all_tests(path, student_id, ex, num_of_questions, tests_per_question_lst, student):
+    for i in range(num_of_questions):
+        num_of_tests = tests_per_question_lst[i]
+        compile_and_run_question(path, ex, student_id, i+1, num_of_tests, student)
+
 
 
 def print_bads(lst):
@@ -105,13 +134,13 @@ def print_bads(lst):
         print(bad)
 
 
-def get_students_list(students_file_path, num_of_questions, tests_per_question_lst):
+def init_students_list(students_file_path, num_of_questions, tests_per_question_lst):
     students_lst = []
     students_file = open(students_file_path)
     for line in students_file:
         student_id = line.rstrip('\n')
         students_lst.append(Student(student_id, num_of_questions, tests_per_question_lst))
-    #students_lst = [Student(student_id.rstrip('\n'), num_of_questions, tests_per_question_lst) for student_id in students_file]
+    # students_lst = [Student(student_id.rstrip('\n'), num_of_questions, tests_per_question_lst) for student_id in students_file]
     students_file.close()
     return students_lst
 

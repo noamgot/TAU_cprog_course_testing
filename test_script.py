@@ -8,47 +8,44 @@ if __name__ == "__main__":
     EXERCISE_PATH = "C:/Users/noamg/Desktop/C_exercises/{}".format(EX)
 
     # todo - put it where it should be....
-    num_of_questions = 2
-    tests_per_question_lst = [2, 3]
+    num_of_questions = 3
+    tests_per_question_lst = [2, 3, 4]
+
+    FatalErrorsLists.bad_c_file_name = [[] for i in range(num_of_questions)]
+    FatalErrorsLists.compilation_error = [[] for i in range(num_of_questions)]
+    FatalErrorsLists.test_timeout = [[[] for j in range(tests_per_question_lst[i])] for i in range(num_of_questions)]
 
     # create a directory for the exercise
     make_dir(EXERCISE_PATH)
 
     # create students list
-    students_lst = get_students_list('students.txt', num_of_questions, tests_per_question_lst)
-
-    too_many_files = []
-    not_zip = []
-    bad_zip_name = []
-    q1_bad_c_name = []
-    q1_comp_err = []
-    q2_bad_c_name = []
-    q2_comp_err = []
+    students_lst = init_students_list('students.txt', num_of_questions, tests_per_question_lst)
 
     # extract zip files
-    extract_zip_files(EXERCISE_PATH, EX, too_many_files, not_zip, bad_zip_name, students_lst)
+    extract_zip_files(EXERCISE_PATH, EX, students_lst)
 
-    # compile files
-    # os.system("compile.bat " + EX)
+    #update the no-submission list in the FatalErrorsLists class
+    update_no_submission_lst(students_lst)
 
-    # run all possible exe files:
+    # compile and run all possible exe files:
     _, dirnames, _ = next(os.walk(EXERCISE_PATH))
     for dir in dirnames:
         if dir != "bad":
-            id = dir
-            current_student = find_student(students_lst, id)
-            compile_and_run_question(EXERCISE_PATH, dir, EX, id, 1, q1_bad_c_name, q1_comp_err, current_student)
-            compile_and_run_question(EXERCISE_PATH, dir, EX, id, 2, q2_bad_c_name, q2_comp_err, current_student)
+            student_id = dir
+            current_student = find_student(students_lst, student_id)
+            compile_and_run_all_tests()
+            compile_and_run_question(EXERCISE_PATH, dir, EX, student_id, 1, q1_bad_c_name, q1_comp_err, current_student)
+            compile_and_run_question(EXERCISE_PATH, dir, EX, student_id, 2, q2_bad_c_name, q2_comp_err, current_student)
             # run_exe_files(EXERCISE_PATH, dir, EX, id, str(1), q1_bad_c_name, q1_comp_err)
             # run_exe_files(EXERCISE_PATH, dir, EX, id, str(2), q2_bad_c_name, q2_comp_err)
 
             # test results
-            student_res_q1 = os.path.join(EXERCISE_PATH, dir, EX + "_q" + str(1) + "_" + id + ".txt")
-            student_res_q2 = os.path.join(EXERCISE_PATH, dir, EX + "_q" + str(2) + "_" + id + ".txt")
+            student_res_q1 = os.path.join(EXERCISE_PATH, dir, EX + "_q" + str(1) + "_" + student_id + ".txt")
+            student_res_q2 = os.path.join(EXERCISE_PATH, dir, EX + "_q" + str(2) + "_" + student_id + ".txt")
             q1_sol = 'ex0q1sol.txt'
             q2_sol = 'ex0q2sol.txt'
-            diff1_path = os.path.join(EXERCISE_PATH, dir, EX + "_q" + str(1) + "_" + id + "_DIFF.txt")
-            diff2_path = os.path.join(EXERCISE_PATH, dir, EX + "_q" + str(2) + "_" + id + "_DIFF.txt")
+            diff1_path = os.path.join(EXERCISE_PATH, dir, EX + "_q" + str(1) + "_" + student_id + "_DIFF.txt")
+            diff2_path = os.path.join(EXERCISE_PATH, dir, EX + "_q" + str(2) + "_" + student_id + "_DIFF.txt")
             if not os.path.isfile(student_res_q1) or not filesAreIdentical(student_res_q1, q1_sol, diff1_path):
                 current_student.q1_wrong_output_err = X
             if not os.path.isfile(student_res_q2) or not filesAreIdentical(student_res_q2, q2_sol, diff2_path):

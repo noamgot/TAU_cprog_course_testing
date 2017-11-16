@@ -195,6 +195,8 @@ for i in range(3):
 
 print(list(s))
 
+
+
 # students_lst = [a1, a2]
 # with open('results.csv', 'w', newline="\n", encoding="utf-8") as csv_file:
 #     wr = csv.writer(csv_file, delimiter=',')
