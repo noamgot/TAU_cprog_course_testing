@@ -52,14 +52,15 @@ class Student:
             [attr for question_attr in questions_attr_lst for attr in question_attr]
         )
 
+    # for all the setters - question_num is passed 0-based
     def set_bad_c_file_err(self, question_num):
-        self.questions[question_num-1].bad_c_file_err = X
+        self.questions[question_num].bad_c_file_err = X
 
     def set_compilation_err(self, question_num):
-        self.questions[question_num-1].compilation_err = X
+        self.questions[question_num].compilation_err = X
 
     def set_wrong_output_err(self, question_num, test_num):
-        self.questions[question_num-1].tests[test_num] = X
+        self.questions[question_num].tests[test_num] = X
 
 
 

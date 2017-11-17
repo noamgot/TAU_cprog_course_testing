@@ -7,6 +7,7 @@ import shutil
 import sys
 import subprocess
 
+
 # giving a very generous default timout of 15 seconds
 def run_command(cmd, timeout=15):
     p = subprocess.Popen(cmd)
@@ -20,13 +21,9 @@ def run_command(cmd, timeout=15):
 
 def validate_input():
     assert len(sys.argv) == 2
-    try:
-        n = int(sys.argv[1])
-    except:
-        raise
+    n = int(sys.argv[1])
     if n < 0 or n > 6:
         sys.exit("Invalid ex num, exiting...")
-
     return n
 
 
@@ -100,33 +97,36 @@ def extract_zip_files(path, ex, students_lst):
 #     else:
 #         bad_c_name_lst.append(id)
 
+
 def compile_and_run_question(path, ex, student_id, question_num, num_of_tests, student):
-    c_path = os.path.join(path, student_id, ex + "_q" + str(question_num) + "_" + student_id + ".c")
+    """question_num should be passed 0-based, i.e - question 1 will be passed as 0, etc."""
+    c_path = os.path.join(path, student_id, ex + "_q" + str(question_num+1) + "_" + student_id + ".c")
     # check if .c file exists
     if not os.path.isfile(c_path):
         student.set_bad_c_file_err(question_num)
-        FatalErrorsLists.bad_c_file_name[question_num-1].append(student_id)
+        FatalErrorsLists.bad_c_file_name[question_num].append(student_id)
         return
 
     os.system("compile_single_file.bat " + ex + " " + student_id + " " + c_path)
-    exe_path = os.path.join(path, student_id, ex + "_q" + str(question_num) + "_" + student_id + ".exe")
+    exe_path = c_path[:-2] + ".exe"
     if os.path.isfile(exe_path):
         # the compilation succeeded - run tests!
         for i in range(num_of_tests):
-            input_file_name = "q" + str(question_num) + "t" + str(i+1) + ".txt"
-            rc = run_command(exe_path + " < " + input_file_name + " > " + exe_path[:-4] + ".txt")
-            if rc != 0: # timeout!
-                FatalErrorsLists.test_timeout[question_num-1][i].append(student_id)
+            ex_qt_identifier = ex + "_q" + str(question_num + 1) + "t" + str(i + 1)
+            input_file_name = ex_qt_identifier + "_input.txt"
+            res_file_name = os.path.join(path, student_id, ex_qt_identifier + "_" + student_id + ".txt")
+            rc = run_command(exe_path + " < " + input_file_name + " > " + res_file_name)
+            if rc != 0:  # timeout!
+                FatalErrorsLists.test_timeout[question_num][i].append(student_id)
     else:  # ex does not exists - compilation error
         student.set_compilation_err(question_num)
-        FatalErrorsLists.compilation_error[question_num-1].append(student_id)
+        FatalErrorsLists.compilation_error[question_num].append(student_id)
 
 
-def compile_and_run_all_tests(path, student_id, ex, num_of_questions, tests_per_question_lst, student):
+def compile_and_run_all_tests(path, ex, student_id, num_of_questions, tests_per_question_lst, student):
     for i in range(num_of_questions):
         num_of_tests = tests_per_question_lst[i]
-        compile_and_run_question(path, ex, student_id, i+1, num_of_tests, student)
-
+        compile_and_run_question(path, ex, student_id, i, num_of_tests, student)
 
 
 def print_bads(lst):
@@ -153,33 +153,39 @@ def write_grades_to_CSV(csv_cols, students_lst):
             wr.writerow(list(student))
 
 
-def filesAreIdentical(fpath1, fpath2, diffpath):
-    result = True
-    diff_file = open(diffpath, 'w')
+def filesAreIdentical(test_path, sol_path):  # , diffpath):
+    # result = True
+    # diff_file = open(diffpath, 'w')
+    with open(test_path, 'r') as test_file, open(sol_path, 'r') as sol_file:
+        test_lines = [line.rstrip('\n') for line in test_file.readlines()]
+        sol_lines = [line.rstrip('\n') for line in sol_file.readlines()]
+        if len(sol_lines) != len(test_lines):
+            return False
+        for i in range(len(sol_lines)):
+            if test_lines[i] != sol_lines[i]:
+                return False
+        return True
 
-    with open(fpath1, 'r') as file1, open(fpath2, 'r') as file2:
-        lines1 = [line.rstrip('\n') for line in file1.readlines()]
-        lines2 = [line.rstrip('\n') for line in file2.readlines()]
-        lines_min_cnt = min(len(lines1), len(lines2))
-        for i in range(lines_min_cnt):
-            if lines1[i] != lines2[i]:
-                diff_file.write("DIFF in line " + str(i + 1) + ":\n")
-                diff_file.write("in file1: " + lines1[i] + "\n")
-                diff_file.write("in file2: " + lines2[i] + "\n")
-                result = False
-
-        if len(lines1) < len(lines2):
-            for i in range(lines_min_cnt, len(lines2)):
-                diff_file.write("DIFF in line " + str(i + 1) + ":\n")
-                diff_file.write("in file1: (no line)\n")
-                diff_file.write("in file2: " + lines2[i] + "\n")
-                result = False
-        elif len(lines1) > len(lines2):
-            for i in range(lines_min_cnt, len(lines1)):
-                diff_file.write("DIFF in line " + str(i + 1) + ":\n")
-                diff_file.write("in file1: " + lines1[i] + "\n")
-                diff_file.write("in file2: (no line)\n")
-                result = False
-
-        diff_file.close()
-        return result
+        # lines_min_cnt = min(len(test_lines), len(sol_lines))
+        # for i in range(lines_min_cnt):
+        #     if test_lines[i] != sol_lines[i]:
+        #         diff_file.write("DIFF in line " + str(i + 1) + ":\n")
+        #         diff_file.write("in test_file: " + test_lines[i] + "\n")
+        #         diff_file.write("in sol_file: " + sol_lines[i] + "\n")
+        #         result = False
+        #
+        # if len(test_lines) < len(sol_lines):
+        #     for i in range(lines_min_cnt, len(sol_lines)):
+        #         diff_file.write("DIFF in line " + str(i + 1) + ":\n")
+        #         diff_file.write("in test_file: (no line)\n")
+        #         diff_file.write("in sol_file: " + sol_lines[i] + "\n")
+        #         result = False
+        # elif len(test_lines) > len(sol_lines):
+        #     for i in range(lines_min_cnt, len(test_lines)):
+        #         diff_file.write("DIFF in line " + str(i + 1) + ":\n")
+        #         diff_file.write("in test_file: " + test_lines[i] + "\n")
+        #         diff_file.write("in sol_file: (no line)\n")
+        #         result = False
+        #
+        # diff_file.close()
+        # return result
