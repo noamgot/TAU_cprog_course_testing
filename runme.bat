@@ -1,4 +1,4 @@
 @echo off
-set exnum=%1
-call python test_script.py %exnum% > ex%exnum%.log
+
+call python test_script.py 1 3 > ex1.log
 exit

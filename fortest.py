@@ -138,38 +138,38 @@
 
 from student import *
 
-class B:
-    def __init__(self):
-        self.Ba = "Ba"
-        self.Bb = "Bb"
-
-    def __iter__(self):
-        return iter([self.Ba, self.Bb])
-class A:
-    def __init__(self):
-        self.Aa = "Aaaaaaaaaaaaaaaaaa"
-        self.Ab = "Ab"
-        self.AB = B()
-
-    def __iter__(self):
-        return iter([self.Aa, self.Ab] + list(self.AB))
-        #return iter(vars(self))
-
-
-
-class C:
-    def __init__(self, num_of_fields):
-        for i in range(1, num_of_fields + 1):
-            setattr(self, "f" + str(i), 12)
-
-    def __iter__(self):
-        return iter(vars(self))
-
-a1 = A()
-a2 = A()
-b = B()
-da = a1.__dict__.keys()
-db = b.__dict__.keys()
+# class B:
+#     def __init__(self):
+#         self.Ba = "Ba"
+#         self.Bb = "Bb"
+#
+#     def __iter__(self):
+#         return iter([self.Ba, self.Bb])
+# class A:
+#     def __init__(self):
+#         self.Aa = "Aaaaaaaaaaaaaaaaaa"
+#         self.Ab = "Ab"
+#         self.AB = B()
+#
+#     def __iter__(self):
+#         return iter([self.Aa, self.Ab] + list(self.AB))
+#         #return iter(vars(self))
+#
+#
+#
+# class C:
+#     def __init__(self, num_of_fields):
+#         for i in range(1, num_of_fields + 1):
+#             setattr(self, "f" + str(i), 12)
+#
+#     def __iter__(self):
+#         return iter(vars(self))
+#
+# a1 = A()
+# a2 = A()
+# b = B()
+# da = a1.__dict__.keys()
+# db = b.__dict__.keys()
 # print(da)
 # print(db)
 #
@@ -179,21 +179,21 @@ db = b.__dict__.keys()
 # print(c.__dict__.keys())
 # print(list(c))
 
-s = Student("123456789", 3, [2,2,3])
-s.no_zip_file = "no zip"
-s.bad_zip_name = "bad zip"
-s.too_many_files = "too many"
-s.no_submission = "no submission"
-for i in range(3):
-    current_q = s.questions[i]
-    qi = "Q" + str(i)
-    current_q.bad_c_file_err = qi + "-bad c file"
-    current_q.compilation_err = qi + "-compilaton"
-    num_of_tests = [2,2,3][i]
-    for j in range(num_of_tests):
-        current_q.tests[j] = qi + "T" + str(j)
-
-print(list(s))
+# s = Student("123456789", 3, [2,2,3])
+# s.no_zip_file = "no zip"
+# s.bad_zip_name = "bad zip"
+# s.too_many_files = "too many"
+# s.no_submission = "no submission"
+# for i in range(3):
+#     current_q = s.questions[i]
+#     qi = "Q" + str(i)
+#     current_q.bad_c_file_err = qi + "-bad c file"
+#     current_q.compilation_err = qi + "-compilaton"
+#     num_of_tests = [2,2,3][i]
+#     for j in range(num_of_tests):
+#         current_q.tests[j] = qi + "T" + str(j)
+#
+# print(list(s))
 
 # students_lst = [a1, a2]
 # with open('results.csv', 'w', newline="\n", encoding="utf-8") as csv_file:
@@ -202,5 +202,34 @@ print(list(s))
 #     for student in students_lst:
 #         wr.writerow(list(student))
 
+# import argparse
+#
+# parser = argparse.ArgumentParser()
+#
+# parser.add_argument("ex", help="Exercise number", type=int, choices=list(range(7)))
+# parser.add_argument("q", help="Number of questions", type=int, choices=list(range(1, 11)))
+# parser.add_argument("tests_per_question", help="How many tests per question", type=int, choices=list(range(1, 21)),
+#                     nargs="+")
+#
+# args = parser.parse_args()
+# print("ex: " + str(args.ex))
+# print("num of questions: " + str(args.q))
+# print("tests per question: " + str(args.tests_per_question))
 
+import logging
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+# create a file handler
+handler = logging.FileHandler('hello.log')
+handler.setLevel(logging.INFO)
+
+# create a logging format
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+
+# add the handlers to the logger
+logger.addHandler(handler)
+
+logger.info('Hello baby')

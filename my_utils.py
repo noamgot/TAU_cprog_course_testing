@@ -1,30 +1,59 @@
-import os
-import errno
+import argparse
 import csv
-from student import *
-import zipfile
+import errno
+import os
 import shutil
-import sys
 import subprocess
+import zipfile
+
+from student import *
 
 
-# giving a very generous default timout of 15 seconds
-def run_command(cmd, timeout=15):
-    p = subprocess.Popen(cmd)
+EXERCISE_PATH = os.path.join(os.environ['HOMEDRIVE'], os.environ['HOMEPATH'], "Desktop","C_exercises")
+SOLUTION_DIR_NAME = os.path.join(os.getcwd(),"solutions")
+INPUT_DIR_NAME = os.path.join(os.getcwd(),"input")
+
+
+def run_tests_on_solution(ex, num_of_questions, tests_per_question_lst):
+    for i in range(num_of_questions):
+        num_of_tests = tests_per_question_lst[i]
+        exe_path = os.path.join(SOLUTION_DIR_NAME, ex + "_q" + str(i + 1) + "_sol.exe")
+        for j in range(num_of_tests):
+            ex_qt_identifier = ex + "_q" + str(i + 1) + "t" + str(j + 1)
+            input_file = open(os.path.join(INPUT_DIR_NAME, ex_qt_identifier + "_input.txt"), "r")
+            res_file = open(os.path.join(SOLUTION_DIR_NAME, ex_qt_identifier + "_sol.txt"), "w")
+            rc = run_command(exe_path, input_file ,res_file)
+            assert rc == 0, "Unexpected solution timeout!!!"  # timeout!
+            input_file.close()
+            res_file.close()
+
+
+# giving a very generous default timout of 10 seconds
+def run_command(cmd, cmd_stdin=None, cmd_stdout=None, timeout=10):
     try:
-        p.wait(timeout)
+        subprocess.run(cmd, timeout, stdin=cmd_stdin, stdout=cmd_stdout)
         return 0
     except subprocess.TimeoutExpired:
-        p.kill()
         return 1
 
 
-def validate_input():
-    assert len(sys.argv) == 2
-    n = int(sys.argv[1])
-    if n < 0 or n > 6:
-        sys.exit("Invalid ex num, exiting...")
-    return n
+def parse_input():
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("ex", help="Exercise number", type=int, choices=list(range(7)))
+    parser.add_argument("qs", help="Number of questions", type=int, choices=list(range(1, 11)))
+    parser.add_argument("tests_per_question", help="How many tests per question", type=int, choices=list(range(1, 21)),
+                        nargs="+")
+
+    args = parser.parse_args()
+    if args.qs != len(args.tests_per_question):
+        parser.error("tests_per_question list doesn't match the number of questions")
+
+    print("Exercise number: " + str(args.ex))
+    print("Number of questions: " + str(args.qs))
+    print("Tests per question: " + str(args.tests_per_question))
+
+    return args
 
 
 def make_dir(path):
@@ -37,7 +66,7 @@ def make_dir(path):
 
 def find_student(students_lst, id_to_find):
     for student in students_lst:
-        if student.id == id_to_find:
+        if student.student_id == id_to_find:
             return student
     return None
 
@@ -52,13 +81,14 @@ def extract_zip_files(path, ex, students_lst):
     first_bad_file = True
     _, dirnames, _ = next(os.walk("."))
     for curr_dir in dirnames:
-        if curr_dir == "__pycache__":
+        # our legal directories contain the "_file_" substring
+        if "_file_" not in curr_dir:
             continue
         curr_id = curr_dir.split("_file_", 1)[1][:9]
         # find current student
         curr_student = find_student(students_lst, curr_id)
         if curr_student is None:
-            raise ValueError("No student was found!")
+            raise ValueError("No student was found with id - {}".format(curr_id))
 
         curr_student.no_submission = None  # student submitted...
 
@@ -99,7 +129,7 @@ def extract_zip_files(path, ex, students_lst):
 
 
 def compile_and_run_question(path, ex, student_id, question_num, num_of_tests, student):
-    """question_num should be passed 0-based, i.e - question 1 will be passed as 0, etc."""
+    """question_num should be passed 0-based, i.e - question 1 will be passed as 0, etc. """
     c_path = os.path.join(path, student_id, ex + "_q" + str(question_num+1) + "_" + student_id + ".c")
     # check if .c file exists
     if not os.path.isfile(c_path):
@@ -113,11 +143,13 @@ def compile_and_run_question(path, ex, student_id, question_num, num_of_tests, s
         # the compilation succeeded - run tests!
         for i in range(num_of_tests):
             ex_qt_identifier = ex + "_q" + str(question_num + 1) + "t" + str(i + 1)
-            input_file_name = ex_qt_identifier + "_input.txt"
-            res_file_name = os.path.join(path, student_id, ex_qt_identifier + "_" + student_id + ".txt")
-            rc = run_command(exe_path + " < " + input_file_name + " > " + res_file_name)
+            input_file = open(os.path.join(INPUT_DIR_NAME, ex_qt_identifier + "_input.txt"), "r")
+            res_file = open(os.path.join(path, student_id, ex_qt_identifier + "_" + student_id + ".txt"), "w")
+            rc = run_command(exe_path, input_file, res_file)
             if rc != 0:  # timeout!
                 FatalErrorsLists.test_timeout[question_num][i].append(student_id)
+            input_file.close()
+            res_file.close()
     else:  # ex does not exists - compilation error
         student.set_compilation_err(question_num)
         FatalErrorsLists.compilation_error[question_num].append(student_id)
@@ -129,10 +161,25 @@ def compile_and_run_all_tests(path, ex, student_id, num_of_questions, tests_per_
         compile_and_run_question(path, ex, student_id, i, num_of_tests, student)
 
 
-def print_bads(lst):
+def print_bads(lst, title):
+    if not lst:
+        return #print only non-empty lists
+    print("*** " + title + " ***")
     for bad in lst:
         print(bad)
 
+def print_fatal_errors(num_of_questions, tests_per_question_lst):
+    print_bads(FatalErrorsLists.no_submission, "No submission")
+    print_bads(FatalErrorsLists.too_many_files, "Too many files")
+    print_bads(FatalErrorsLists.no_zip_file, "No zip file")
+    print_bads(FatalErrorsLists.bad_zip_name, "Bad zip file name")
+    for i in range(num_of_questions):
+        qi = "Q" + str(i + 1)
+        print_bads(FatalErrorsLists.bad_c_file_name[i], qi + " - Bad .c file name")
+        print_bads(FatalErrorsLists.compilation_error[i], qi + " - Compilation error")
+        for j in range(tests_per_question_lst[i]):
+            qitj = qi + "T" + str(j + 1)
+            print_bads(FatalErrorsLists.test_timeout[i][j], qitj + " - Timout error")
 
 def init_students_list(students_file_path, num_of_questions, tests_per_question_lst):
     students_lst = []
