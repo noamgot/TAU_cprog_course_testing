@@ -10,6 +10,7 @@ class FatalErrorsLists:
     bad_c_file_name = []
     compilation_error = []
     test_timeout = []
+    test_runtime_error = []
 
 
 class Question:

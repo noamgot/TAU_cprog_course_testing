@@ -1,9 +1,5 @@
 from my_utils import *
 
-
-
-
-
 if __name__ == "__main__":
 
     # validate input
@@ -55,7 +51,7 @@ if __name__ == "__main__":
                     sol_file_name = os.path.join(SOLUTION_DIR_NAME, ex_qt_identifier + "_sol.txt")
                     # compare files only if the result file exists
                     if os.path.isfile(student_res_file_name):
-                        if not filesAreIdentical(student_res_file_name, sol_file_name):  # , diff1_path):
+                        if not files_are_identical(student_res_file_name, sol_file_name):  # , diff1_path):
                             current_student.set_wrong_output_err(i, j)
 
     csv_cols = [

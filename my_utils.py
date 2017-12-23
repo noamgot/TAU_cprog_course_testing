@@ -28,13 +28,17 @@ def run_tests_on_solution(ex, num_of_questions, tests_per_question_lst):
             res_file.close()
 
 
-# giving a very generous default timout of 10 seconds
-def run_command(cmd, cmd_stdin=None, cmd_stdout=None, timeout=10):
+# giving a very generous default timout of 15 seconds
+def run_command(cmd, cmd_stdin=None, cmd_stdout=None, cmd_timout=15):
     try:
-        subprocess.run(cmd, timeout, stdin=cmd_stdin, stdout=cmd_stdout)
+        rc = subprocess.run(cmd, timeout=cmd_timout, stdin=cmd_stdin, stdout=cmd_stdout, shell=True)
+        rc.check_returncode()
         return 0
     except subprocess.TimeoutExpired:
-        return 1
+        return -123
+    except subprocess.CalledProcessError as exc:
+        print('error: cmd={}, code={}, out="{}"'.format(cmd, exc.returncode, exc.output, ))
+        return -1
 
 
 def parse_input():
@@ -180,12 +184,13 @@ def print_fatal_errors(num_of_questions, tests_per_question_lst):
         for j in range(tests_per_question_lst[i]):
             qitj = qi + "T" + str(j + 1)
             print_bads(FatalErrorsLists.test_timeout[i][j], qitj + " - Timout error")
+            print_bads(FatalErrorsLists.test_runtime_error[i][j], qitj + " - Runtime error")
 
 def init_students_list(students_file_path, num_of_questions, tests_per_question_lst):
     students_lst = []
     students_file = open(students_file_path)
     for line in students_file:
-        student_id = line.rstrip('\n')
+        student_id = line.rstrip()
         students_lst.append(Student(student_id, num_of_questions, tests_per_question_lst))
     # students_lst = [Student(student_id.rstrip('\n'), num_of_questions, tests_per_question_lst) for student_id in students_file]
     students_file.close()
@@ -200,12 +205,12 @@ def write_grades_to_CSV(csv_cols, students_lst):
             wr.writerow(list(student))
 
 
-def filesAreIdentical(test_path, sol_path):  # , diffpath):
+def files_are_identical(test_path, sol_path):  # , diffpath):
     # result = True
     # diff_file = open(diffpath, 'w')
     with open(test_path, 'r') as test_file, open(sol_path, 'r') as sol_file:
-        test_lines = [line.rstrip('\n') for line in test_file.readlines()]
-        sol_lines = [line.rstrip('\n') for line in sol_file.readlines()]
+        test_lines = ["".join(line.lower().split()) for line in test_file.readlines()]
+        sol_lines = ["".join(line.lower().split()) for line in sol_file.readlines()]
         if len(sol_lines) != len(test_lines):
             return False
         for i in range(len(sol_lines)):
