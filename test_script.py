@@ -22,6 +22,12 @@ if __name__ == "__main__":
         ] for i in range(num_of_questions)
     ]
 
+    FatalErrorsLists.test_runtime_error = [
+        [
+            [] for j in range(tests_per_question_lst[i])
+        ] for i in range(num_of_questions)
+    ]
+
     # create a directory for the exercise
     make_dir(EXERCISE_PATH)
 
@@ -35,10 +41,10 @@ if __name__ == "__main__":
     update_no_submission_lst(students_lst)
 
     # compile and run all possible exe files:
-    _, dirnames, _ = next(os.walk(EXERCISE_PATH))
-    for dir in dirnames:
-        if dir != "bad":
-            student_id = dir
+    _, dir_names, _ = next(os.walk(EXERCISE_PATH))
+    for dir_name in dir_names:
+        if dir_name != "bad":
+            student_id = dir_name
             current_student = find_student(students_lst, student_id)
             compile_and_run_all_tests(EXERCISE_PATH, ex, student_id, num_of_questions, tests_per_question_lst,
                                       current_student)
@@ -46,13 +52,15 @@ if __name__ == "__main__":
             for i in range(num_of_questions):
                 for j in range(tests_per_question_lst[i]):
                     ex_qt_identifier = ex + "_q" + str(i + 1) + "t" + str(j + 1)
-                    student_res_file_name = os.path.join(EXERCISE_PATH, dir,
+                    student_res_file_name = os.path.join(EXERCISE_PATH, dir_name,
                                                          ex_qt_identifier + "_" + student_id + ".txt")
                     sol_file_name = os.path.join(SOLUTION_DIR_NAME, ex_qt_identifier + "_sol.txt")
                     # compare files only if the result file exists
                     if os.path.isfile(student_res_file_name):
                         if not files_are_identical(student_res_file_name, sol_file_name):  # , diff1_path):
                             current_student.set_wrong_output_err(i, j)
+                    else: # no result file
+                        current_student.set_wrong_output_err(i, j)
 
     csv_cols = [
         "Student ID",

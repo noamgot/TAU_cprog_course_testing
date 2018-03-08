@@ -135,112 +135,112 @@
 # #
 # #         return result
 # #
-
-from student import *
-
-# class B:
-#     def __init__(self):
-#         self.Ba = "Ba"
-#         self.Bb = "Bb"
 #
-#     def __iter__(self):
-#         return iter([self.Ba, self.Bb])
-# class A:
-#     def __init__(self):
-#         self.Aa = "Aaaaaaaaaaaaaaaaaa"
-#         self.Ab = "Ab"
-#         self.AB = B()
+# from student import *
 #
-#     def __iter__(self):
-#         return iter([self.Aa, self.Ab] + list(self.AB))
-#         #return iter(vars(self))
+# # class B:
+# #     def __init__(self):
+# #         self.Ba = "Ba"
+# #         self.Bb = "Bb"
+# #
+# #     def __iter__(self):
+# #         return iter([self.Ba, self.Bb])
+# # class A:
+# #     def __init__(self):
+# #         self.Aa = "Aaaaaaaaaaaaaaaaaa"
+# #         self.Ab = "Ab"
+# #         self.AB = B()
+# #
+# #     def __iter__(self):
+# #         return iter([self.Aa, self.Ab] + list(self.AB))
+# #         #return iter(vars(self))
+# #
+# #
+# #
+# # class C:
+# #     def __init__(self, num_of_fields):
+# #         for i in range(1, num_of_fields + 1):
+# #             setattr(self, "f" + str(i), 12)
+# #
+# #     def __iter__(self):
+# #         return iter(vars(self))
+# #
+# # a1 = A()
+# # a2 = A()
+# # b = B()
+# # da = a1.__dict__.keys()
+# # db = b.__dict__.keys()
+# # print(da)
+# # print(db)
+# #
+# # print(list(a1))
+# #
+# # c = C(4)
+# # print(c.__dict__.keys())
+# # print(list(c))
 #
+# # s = Student("123456789", 3, [2,2,3])
+# # s.no_zip_file = "no zip"
+# # s.bad_zip_name = "bad zip"
+# # s.too_many_files = "too many"
+# # s.no_submission = "no submission"
+# # for i in range(3):
+# #     current_q = s.questions[i]
+# #     qi = "Q" + str(i)
+# #     current_q.bad_c_file_err = qi + "-bad c file"
+# #     current_q.compilation_err = qi + "-compilaton"
+# #     num_of_tests = [2,2,3][i]
+# #     for j in range(num_of_tests):
+# #         current_q.tests[j] = qi + "T" + str(j)
+# #
+# # print(list(s))
 #
+# # students_lst = [a1, a2]
+# # with open('results.csv', 'w', newline="\n", encoding="utf-8") as csv_file:
+# #     wr = csv.writer(csv_file, delimiter=',')
+# #     #wr.writerow(csv_cols)
+# #     for student in students_lst:
+# #         wr.writerow(list(student))
 #
-# class C:
-#     def __init__(self, num_of_fields):
-#         for i in range(1, num_of_fields + 1):
-#             setattr(self, "f" + str(i), 12)
+# # import argparse
+# #
+# # parser = argparse.ArgumentParser()
+# #
+# # parser.add_argument("ex", help="Exercise number", type=int, choices=list(range(7)))
+# # parser.add_argument("q", help="Number of questions", type=int, choices=list(range(1, 11)))
+# # parser.add_argument("tests_per_question", help="How many tests per question", type=int, choices=list(range(1, 21)),
+# #                     nargs="+")
+# #
+# # args = parser.parse_args()
+# # print("ex: " + str(args.ex))
+# # print("num of questions: " + str(args.q))
+# # print("tests per question: " + str(args.tests_per_question))
 #
-#     def __iter__(self):
-#         return iter(vars(self))
+# # def filesAreIdentical(test_path, sol_path):  # , diffpath):
+# #     # result = True
+# #     # diff_file = open(diffpath, 'w')
+# #     with open(test_path, 'r') as test_file, open(sol_path, 'r') as sol_file:
+# #         test_lines = [line.rstrip().lower() for line in test_file.readlines()]
+# #         sol_lines = [line.rstrip().lower() for line in sol_file.readlines()]
+# #         if len(sol_lines) != len(test_lines):
+# #             return False
+# #         for i in range(len(sol_lines)):
+# #             if test_lines[i] != sol_lines[i]:
+# #                 return False
+# #         return True
+# #
+# #
+# # print("aaaaaa: " + str(filesAreIdentical("1.txt", "2.txt")))
+# import subprocess
 #
-# a1 = A()
-# a2 = A()
-# b = B()
-# da = a1.__dict__.keys()
-# db = b.__dict__.keys()
-# print(da)
-# print(db)
-#
-# print(list(a1))
-#
-# c = C(4)
-# print(c.__dict__.keys())
-# print(list(c))
-
-# s = Student("123456789", 3, [2,2,3])
-# s.no_zip_file = "no zip"
-# s.bad_zip_name = "bad zip"
-# s.too_many_files = "too many"
-# s.no_submission = "no submission"
-# for i in range(3):
-#     current_q = s.questions[i]
-#     qi = "Q" + str(i)
-#     current_q.bad_c_file_err = qi + "-bad c file"
-#     current_q.compilation_err = qi + "-compilaton"
-#     num_of_tests = [2,2,3][i]
-#     for j in range(num_of_tests):
-#         current_q.tests[j] = qi + "T" + str(j)
-#
-# print(list(s))
-
-# students_lst = [a1, a2]
-# with open('results.csv', 'w', newline="\n", encoding="utf-8") as csv_file:
-#     wr = csv.writer(csv_file, delimiter=',')
-#     #wr.writerow(csv_cols)
-#     for student in students_lst:
-#         wr.writerow(list(student))
-
-# import argparse
-#
-# parser = argparse.ArgumentParser()
-#
-# parser.add_argument("ex", help="Exercise number", type=int, choices=list(range(7)))
-# parser.add_argument("q", help="Number of questions", type=int, choices=list(range(1, 11)))
-# parser.add_argument("tests_per_question", help="How many tests per question", type=int, choices=list(range(1, 21)),
-#                     nargs="+")
-#
-# args = parser.parse_args()
-# print("ex: " + str(args.ex))
-# print("num of questions: " + str(args.q))
-# print("tests per question: " + str(args.tests_per_question))
-
-# def filesAreIdentical(test_path, sol_path):  # , diffpath):
-#     # result = True
-#     # diff_file = open(diffpath, 'w')
-#     with open(test_path, 'r') as test_file, open(sol_path, 'r') as sol_file:
-#         test_lines = [line.rstrip().lower() for line in test_file.readlines()]
-#         sol_lines = [line.rstrip().lower() for line in sol_file.readlines()]
-#         if len(sol_lines) != len(test_lines):
-#             return False
-#         for i in range(len(sol_lines)):
-#             if test_lines[i] != sol_lines[i]:
-#                 return False
-#         return True
-#
-#
-# print("aaaaaa: " + str(filesAreIdentical("1.txt", "2.txt")))
-import subprocess
-
-def run_command(cmd, cmd_stdin=None, cmd_stdout=None, cmd_timout=15):
-    try:
-        rc = subprocess.run(cmd, timeout=cmd_timout, stdin=cmd_stdin, stdout=cmd_stdout, shell=True)
-        rc.check_returncode()
-        print ("GOT HERE!!!")
-        return 0
-    except subprocess.TimeoutExpired:
-        return -123
-    except subprocess.CalledProcessError as exc:
-        print('error: code={}, out="{}"'.format(exc.returncode, exc.output, ))
-        return -1
+# def run_command(cmd, cmd_stdin=None, cmd_stdout=None, cmd_timout=15):
+#     try:
+#         rc = subprocess.run(cmd, timeout=cmd_timout, stdin=cmd_stdin, stdout=cmd_stdout, shell=True)
+#         rc.check_returncode()
+#         print ("GOT HERE!!!")
+#         return 0
+#     except subprocess.TimeoutExpired:
+#         return -123
+#     except subprocess.CalledProcessError as exc:
+#         print('error: code={}, out="{}"'.format(exc.returncode, exc.output, ))
+#         return -1

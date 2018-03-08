@@ -12,6 +12,7 @@ from student import *
 EXERCISE_PATH = os.path.join(os.environ['HOMEDRIVE'], os.environ['HOMEPATH'], "Desktop","C_exercises")
 SOLUTION_DIR_NAME = os.path.join(os.getcwd(),"solutions")
 INPUT_DIR_NAME = os.path.join(os.getcwd(),"input")
+SUBMISSIONS_DIR_NAME = os.path.join(os.getcwd(),"submissions")
 
 
 def run_tests_on_solution(ex, num_of_questions, tests_per_question_lst):
@@ -23,7 +24,8 @@ def run_tests_on_solution(ex, num_of_questions, tests_per_question_lst):
             input_file = open(os.path.join(INPUT_DIR_NAME, ex_qt_identifier + "_input.txt"), "r")
             res_file = open(os.path.join(SOLUTION_DIR_NAME, ex_qt_identifier + "_sol.txt"), "w")
             rc = run_command(exe_path, input_file ,res_file)
-            assert rc == 0, "Unexpected solution timeout!!!"  # timeout!
+            assert rc != -123, "Unexpected solution timeout!!!"  # timeout!
+            assert rc != -1, "Unexpected solution runtime error!!!"  # runtime error!
             input_file.close()
             res_file.close()
 
@@ -83,12 +85,12 @@ def update_no_submission_lst(students_lst):
 
 def extract_zip_files(path, ex, students_lst):
     first_bad_file = True
-    _, dirnames, _ = next(os.walk("."))
-    for curr_dir in dirnames:
+    _, _, file_names = next(os.walk(SUBMISSIONS_DIR_NAME))
+    for curr_file_name in file_names:
         # our legal directories contain the "_file_" substring
-        if "_file_" not in curr_dir:
+        if "_file_" not in curr_file_name:
             continue
-        curr_id = curr_dir.split("_file_", 1)[1][:9]
+        curr_id = curr_file_name.split("_file_", 1)[1][:9]
         # find current student
         curr_student = find_student(students_lst, curr_id)
         if curr_student is None:
@@ -96,49 +98,63 @@ def extract_zip_files(path, ex, students_lst):
 
         curr_student.no_submission = None  # student submitted...
 
-        _, _, filenames = next(os.walk(curr_dir))
-        if len(filenames) != 1:  # should be only one .zip file
-            curr_student.too_many_files = X
-            FatalErrorsLists.too_many_files.append(curr_id)
-        elif filenames[0].endswith(".zip"):
-            if filenames[0][:-4] != (ex + "_" + curr_id):
-                curr_student.bad_zip_name = X
-                FatalErrorsLists.bad_zip_name.append(curr_id)
-            zip_file = os.path.join(".", curr_dir, filenames[0])
-            dir_to_extract = os.path.join(path, curr_id)
-            make_dir(dir_to_extract)
-            zip_ref = zipfile.ZipFile(zip_file, 'r')
-            zip_ref.extractall(dir_to_extract)
-            zip_ref.close()
-        else:  # not a .zip file
-            not_zip_dir = os.path.join(path, "bad")
-            if first_bad_file:
-                make_dir(not_zip_dir)
-                first_bad_file = False
-            shutil.copy(os.path.join(".", curr_dir, filenames[0]), os.path.join(not_zip_dir))
-            curr_student.no_zip_file = X
-            FatalErrorsLists.no_zip_file.append(curr_id)
+        zip_file = os.path.join(SUBMISSIONS_DIR_NAME, curr_file_name)
+        dir_to_extract = os.path.join(path, curr_id)
+        make_dir(dir_to_extract)
+        zip_ref = zipfile.ZipFile(zip_file, 'r')
+        zip_ref.extractall(dir_to_extract)
+        zip_ref.close()
 
 
-# def run_exe_files(path ,dir, ex, id, question_num, bad_c_name_lst, comp_error_lst):
-#     c_path = os.path.join(path, dir, ex + "_q" + question_num + "_" + id + ".c")
-#     if os.path.isfile(c_path):
-#         exe_path = os.path.join(path, dir, ex + "_q" + question_num + "_" + id + ".exe")
-#         if os.path.isfile(exe_path):
-#             os.system(exe_path + " > " + exe_path[:-4] + ".txt")
-#         else:  # compilation error
-#             comp_error_lst.append(id)
-#     else:
-#         bad_c_name_lst.append(id)
+    # old version - when files come in folders
+    # first_bad_file = True
+    # _, dirnames, _ = next(os.walk(SUBMISSIONS_DIR_NAME))
+    # for curr_dir in dirnames:
+    #     # our legal directories contain the "_file_" substring
+    #     if "_file_" not in curr_dir:
+    #         continue
+    #     curr_id = curr_dir.split("_file_", 1)[1][:9]
+    #     # find current student
+    #     curr_student = find_student(students_lst, curr_id)
+    #     if curr_student is None:
+    #         raise ValueError("No student was found with id - {}".format(curr_id))
+    #
+    #     curr_student.no_submission = None  # student submitted...
+    #
+    #     _, _, filenames = next(os.walk(curr_dir))
+    #     if len(filenames) != 1:  # should be only one .zip file
+    #         curr_student.too_many_files = X
+    #         FatalErrorsLists.too_many_files.append(curr_id)
+    #     elif filenames[0].endswith(".zip"):
+    #         if filenames[0][:-4] != (ex + "_" + curr_id):
+    #             curr_student.bad_zip_name = X
+    #             FatalErrorsLists.bad_zip_name.append(curr_id)
+    #         zip_file = os.path.join(".", curr_dir, filenames[0])
+    #         dir_to_extract = os.path.join(path, curr_id)
+    #         make_dir(dir_to_extract)
+    #         zip_ref = zipfile.ZipFile(zip_file, 'r')
+    #         zip_ref.extractall(dir_to_extract)
+    #         zip_ref.close()
+    #     else:  # not a .zip file
+    #         not_zip_dir = os.path.join(path, "bad")
+    #         if first_bad_file:
+    #             make_dir(not_zip_dir)
+    #             first_bad_file = False
+    #         shutil.copy(os.path.join(".", curr_dir, filenames[0]), os.path.join(not_zip_dir))
+    #         curr_student.no_zip_file = X
+    #         FatalErrorsLists.no_zip_file.append(curr_id)
 
 
-def compile_and_run_question(path, ex, student_id, question_num, num_of_tests, student):
+def compile_and_run_question(path, ex, student_id, question_num, num_of_tests, student1, student2=None):
     """question_num should be passed 0-based, i.e - question 1 will be passed as 0, etc. """
     c_path = os.path.join(path, student_id, ex + "_q" + str(question_num+1) + "_" + student_id + ".c")
     # check if .c file exists
     if not os.path.isfile(c_path):
-        student.set_bad_c_file_err(question_num)
+        student1.set_bad_c_file_err(question_num)
         FatalErrorsLists.bad_c_file_name[question_num].append(student_id)
+        if student2 is not None:
+            student2.set_bad_c_file_err(question_num)
+            #FatalErrorsLists.bad_c_file_name[question_num].append(student_id)
         return
 
     os.system("compile_single_file.bat " + ex + " " + student_id + " " + c_path)
@@ -150,19 +166,21 @@ def compile_and_run_question(path, ex, student_id, question_num, num_of_tests, s
             input_file = open(os.path.join(INPUT_DIR_NAME, ex_qt_identifier + "_input.txt"), "r")
             res_file = open(os.path.join(path, student_id, ex_qt_identifier + "_" + student_id + ".txt"), "w")
             rc = run_command(exe_path, input_file, res_file)
-            if rc != 0:  # timeout!
+            if rc == -123:  # timeout!
                 FatalErrorsLists.test_timeout[question_num][i].append(student_id)
+            if rc == -1:  # timeout!
+                FatalErrorsLists.test_runtime_error[question_num][i].append(student_id)
             input_file.close()
             res_file.close()
     else:  # ex does not exists - compilation error
-        student.set_compilation_err(question_num)
+        student1.set_compilation_err(question_num)
         FatalErrorsLists.compilation_error[question_num].append(student_id)
 
 
-def compile_and_run_all_tests(path, ex, student_id, num_of_questions, tests_per_question_lst, student):
+def compile_and_run_all_tests(path, ex, student_id, num_of_questions, tests_per_question_lst, student1, student2=None):
     for i in range(num_of_questions):
         num_of_tests = tests_per_question_lst[i]
-        compile_and_run_question(path, ex, student_id, i, num_of_tests, student)
+        compile_and_run_question(path, ex, student_id, i, num_of_tests, student1, student2)
 
 
 def print_bads(lst, title):
