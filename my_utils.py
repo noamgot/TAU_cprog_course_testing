@@ -3,6 +3,7 @@ import csv
 import errno
 import os
 import shutil
+import string
 import subprocess
 import zipfile
 
@@ -223,12 +224,12 @@ def write_grades_to_CSV(csv_cols, students_lst):
             wr.writerow(list(student))
 
 
-def files_are_identical(test_path, sol_path):  # , diffpath):
-    # result = True
-    # diff_file = open(diffpath, 'w')
+def files_are_identical(test_path, sol_path):
     with open(test_path, 'r') as test_file, open(sol_path, 'r') as sol_file:
-        test_lines = ["".join(line.lower().split()) for line in test_file.readlines()]
-        sol_lines = ["".join(line.lower().split()) for line in sol_file.readlines()]
+        # compare files ignoring punctuation + whitespaces
+        ignore_chars = string.punctuation + string.whitespace
+        test_lines = [line.lower().translate(None, ignore_chars) for line in test_file.readlines()]
+        sol_lines = [line.lower().translate(None, ignore_chars) for line in sol_file.readlines()]
         if len(sol_lines) != len(test_lines):
             return False
         for i in range(len(sol_lines)):
